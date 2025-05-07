@@ -10,7 +10,9 @@ import UIKit
 class ViewController: UIViewController {
     
     var imc = 0.0
-    
+    var peso: Float = 70.0
+    var altura: Float = 1.75
+
     lazy var logoImage: UIImageView = {
         let logo = UIImageView()
         logo.image = UIImage(named: "logo-app")
@@ -18,30 +20,48 @@ class ViewController: UIViewController {
         return logo
     }()
     
-    private lazy var pesoTextField: UITextField = {
-        let peso = UITextField()
-        peso.placeholder = "Digite seu peso em kg"
-        peso.textAlignment = .center
-        peso.borderStyle = .roundedRect
-        peso.keyboardType = .numbersAndPunctuation
-        peso.translatesAutoresizingMaskIntoConstraints = false
-        return peso
+    private lazy var pesoLabel: UILabel = {
+        let label = UILabel()
+        label.text = "Peso: \(Int(peso)) kg"
+        label.textAlignment = .center
+        label.translatesAutoresizingMaskIntoConstraints = false
+        return label
     }()
     
-    private lazy var alturaTextField: UITextField = {
-        let altura = UITextField()
-        altura.placeholder = "Digite sua altura em metros"
-        altura.textAlignment = .center
-        altura.borderStyle = .roundedRect
-        altura.keyboardType = .numbersAndPunctuation
-        altura.translatesAutoresizingMaskIntoConstraints = false
-        return altura
+    private lazy var pesoSlider: UISlider = {
+        let slider = UISlider()
+        slider.minimumValue = 40
+        slider.maximumValue = 150
+        slider.value = peso
+        slider.addTarget(self, action: #selector(pesoChanged), for: .valueChanged)
+        slider.translatesAutoresizingMaskIntoConstraints = false
+        return slider
+    }()
+    
+    private lazy var alturaLabel: UILabel = {
+        let label = UILabel()
+        label.text = String(format: "Altura: %.2f m", altura)
+        label.textAlignment = .center
+        label.translatesAutoresizingMaskIntoConstraints = false
+        return label
+    }()
+    
+    private lazy var alturaSlider: UISlider = {
+        let slider = UISlider()
+        slider.minimumValue = 1.10
+        slider.maximumValue = 2.30
+        slider.value = altura
+        slider.addTarget(self, action: #selector(alturaChanged), for: .valueChanged)
+        slider.translatesAutoresizingMaskIntoConstraints = false
+        return slider
     }()
     
     private lazy var resultadoButton: UIButton = {
         let button = UIButton()
+        button.layer.cornerRadius = 8
+        button.backgroundColor = .systemBlue
         button.setTitle("Resultado", for: .normal)
-        button.setTitleColor(.systemBlue, for: .normal)
+        button.setTitleColor(.white, for: .normal)
         button.setTitleColor(.lightGray, for: .highlighted)
         button.translatesAutoresizingMaskIntoConstraints = false
         return button
@@ -51,16 +71,13 @@ class ViewController: UIViewController {
         let resultado = UILabel()
         resultado.text = ""
         resultado.textAlignment = .center
-        resultado.font = UIFont(name: "HelveticaNeue-CondensedBlack", size: 30)
-        resultado.textColor = .systemBlue
         resultado.translatesAutoresizingMaskIntoConstraints = false
         return resultado
     }()
-
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         view.backgroundColor = .systemBackground
-        title = "Calculadora de IMC"
         setupLayout()
         selectButtonResult()
     }
@@ -69,41 +86,50 @@ class ViewController: UIViewController {
         resultadoButton.addTarget(self, action: #selector(buttonTapped), for: .touchUpInside)
     }
     
+    @objc func pesoChanged() {
+        peso = pesoSlider.value
+        pesoLabel.text = "Peso: \(Int(peso)) kg"
+    }
+
+    @objc func alturaChanged() {
+        altura = alturaSlider.value
+        alturaLabel.text = String(format: "Altura: %.2f m", altura)
+    }
+
     @objc func buttonTapped() {
         calcularImc()
     }
-    
+
     func calcularImc() {
-        if let pesoText = pesoTextField.text,
-            let alturaText = alturaTextField.text,
-            let peso = Double(pesoText),
-            let altura = Double(alturaText) {
-                imc = peso / (altura * altura)
-                showResults()
-        }
+        imc = Double(peso) / (Double(altura) * Double(altura))
+        showResult()
     }
-    
-    func showResults() {
-        var result: String = ""
+
+    func showResult() {
+        var result = ""
         switch imc {
-            case 0..<16:
-                result = "Magreza"
-            case 16..<18.5:
-                result = "Abaixo do peso"
-            case 18.5..<25:
-                result = "Peso ideal"
-            case 25..<30:
-                result = "Sobrepeso"
-            default:
-                result = "Obesidade"
+        case 0..<16:
+            result = "Magreza"
+        case 16..<18.5:
+            result = "Abaixo do peso"
+        case 18.5..<25:
+            result = "Peso ideal"
+        case 25..<30:
+            result = "Sobre peso"
+        default:
+            result = "Obesidade"
         }
-        resultadoLabel.text = "\(String(format: "%.1f", imc)) - \(result)"
+        
+        resultadoLabel.text = "\(Int(imc)) - \(result)"
+        view.endEditing(true)
     }
-    
+
     func addComponents() {
         view.addSubview(logoImage)
-        view.addSubview(pesoTextField)
-        view.addSubview(alturaTextField)
+        view.addSubview(pesoLabel)
+        view.addSubview(pesoSlider)
+        view.addSubview(alturaLabel)
+        view.addSubview(alturaSlider)
         view.addSubview(resultadoButton)
         view.addSubview(resultadoLabel)
     }
@@ -116,15 +142,23 @@ class ViewController: UIViewController {
             logoImage.heightAnchor.constraint(equalToConstant: 150),
             logoImage.widthAnchor.constraint(equalToConstant: 160),
             
-            pesoTextField.topAnchor.constraint(equalTo: logoImage.bottomAnchor, constant: 40),
-            pesoTextField.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
-            pesoTextField.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
+            pesoLabel.topAnchor.constraint(equalTo: logoImage.bottomAnchor, constant: 40),
+            pesoLabel.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
+            pesoLabel.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
             
-            alturaTextField.topAnchor.constraint(equalTo: pesoTextField.bottomAnchor, constant: 20),
-            alturaTextField.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
-            alturaTextField.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
+            pesoSlider.topAnchor.constraint(equalTo: pesoLabel.bottomAnchor, constant: 10),
+            pesoSlider.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
+            pesoSlider.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
             
-            resultadoButton.topAnchor.constraint(equalTo: alturaTextField.bottomAnchor, constant: 20),
+            alturaLabel.topAnchor.constraint(equalTo: pesoSlider.bottomAnchor, constant: 30),
+            alturaLabel.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
+            alturaLabel.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
+            
+            alturaSlider.topAnchor.constraint(equalTo: alturaLabel.bottomAnchor, constant: 10),
+            alturaSlider.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
+            alturaSlider.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
+            
+            resultadoButton.topAnchor.constraint(equalTo: alturaSlider.bottomAnchor, constant: 30),
             resultadoButton.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
             resultadoButton.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
             
@@ -133,6 +167,4 @@ class ViewController: UIViewController {
             resultadoLabel.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
         ])
     }
-
 }
-
